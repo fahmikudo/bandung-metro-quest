@@ -116,16 +116,17 @@ export function RouteDetailModal({
                   <h3 className="text-base font-extrabold text-slate-900">
                     {startStop} → {endStop}
                   </h3>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <div className="mt-1.5 flex flex-col gap-1">
                     {route.legs.map((leg, i) => (
-                      <div key={`${leg.corridorId}-${i}`} className="flex items-center gap-1.5">
-                        {i > 0 && <ArrowRight className="h-3.5 w-3.5 text-slate-400" />}
+                      <div key={`${leg.corridorId}-${i}`} className="flex flex-wrap items-center gap-1.5">
+                        {i > 0 && <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-400" />}
                         <span
-                          className="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-extrabold text-white shadow-2xs"
+                          className="inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-xs font-extrabold text-white shadow-2xs"
                           style={{ backgroundColor: leg.corridorColor }}
                         >
                           {leg.operatorId === 'MJT' ? `MJT ${leg.corridorCode}` : leg.corridorCode}
                         </span>
+                        <span className="text-xs font-bold text-slate-700">{leg.corridorName}</span>
                       </div>
                     ))}
                   </div>
@@ -249,13 +250,19 @@ export function RouteDetailModal({
                         <span>
                           {legIdx + 1}.{' '}
                           {leg.operatorId === 'ANGKOT'
-                            ? leg.corridorCode
-                            : `${leg.operatorName} ${leg.corridorCode}`}
+                            ? `${leg.corridorCode} · ${leg.corridorName}`
+                            : `${leg.operatorName} ${leg.corridorCode} · ${leg.corridorName}`}
                         </span>
                         <span className="font-semibold text-slate-500">
-                          → arah {leg.directionName}
+                          (arah {leg.directionName})
                         </span>
                       </div>
+
+                      {leg.corridorOfficialName && (
+                        <p className="mt-0.5 text-xs italic text-slate-500">
+                          Trayek resmi: {leg.corridorOfficialName}
+                        </p>
+                      )}
 
                       {leg.vehicleColorLabel && (
                         <div className="mt-1.5">

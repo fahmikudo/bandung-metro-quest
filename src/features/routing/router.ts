@@ -17,6 +17,7 @@ export interface RouteLeg {
   corridorId: string;
   corridorCode: string;
   corridorName: string;
+  corridorOfficialName?: string | null;
   corridorColor: string;
   vehicleColorLabel: string | null;
   operatorId: OperatorId;
@@ -256,6 +257,7 @@ function buildLeg(
     corridorId: corridor.id,
     corridorCode: corridor.code,
     corridorName: corridor.name,
+    corridorOfficialName: corridor.officialName ?? null,
     corridorColor: corridor.color,
     vehicleColorLabel: corridor.vehicleColorLabel ?? null,
     operatorId: corridor.operator,

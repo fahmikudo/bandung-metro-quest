@@ -96,15 +96,18 @@ export function RouteResultCard({
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-col gap-1.5">
               {route.legs.map((leg, i) => (
-                <div key={`${leg.corridorId}-${i}`} className="flex items-center gap-1.5">
-                  {i > 0 && <ArrowRight className="h-3.5 w-3.5 text-slate-400" />}
+                <div key={`${leg.corridorId}-${i}`} className="flex flex-wrap items-center gap-1.5">
+                  {i > 0 && <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-400" />}
                   <span
-                    className="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-extrabold text-white shadow-2xs"
+                    className="inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-xs font-extrabold text-white shadow-2xs"
                     style={{ backgroundColor: leg.corridorColor }}
                   >
                     {leg.operatorId === 'MJT' ? `MJT ${leg.corridorCode}` : leg.corridorCode}
+                  </span>
+                  <span className="text-xs font-bold leading-snug text-slate-800">
+                    {leg.corridorName}
                   </span>
                 </div>
               ))}

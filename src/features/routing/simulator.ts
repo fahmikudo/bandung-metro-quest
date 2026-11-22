@@ -43,9 +43,12 @@ export function buildSimulationSteps(
     const leg = route.legs[legIdx];
     const legFare = isDiscount ? leg.fareDiscount : leg.fareRegular;
     const isAngkot = leg.operatorId === 'ANGKOT';
+    const shortVehicleLabel = isAngkot
+      ? `${leg.corridorCode} (${leg.corridorName})`
+      : `${leg.operatorName} ${leg.corridorCode} (${leg.corridorName})`;
     const vehicleLabel = isAngkot
-      ? `${leg.corridorCode}${leg.vehicleColorLabel ? ` (${leg.vehicleColorLabel})` : ''}`
-      : `${leg.operatorName} ${leg.corridorCode}`;
+      ? `${leg.corridorCode} · ${leg.corridorName}${leg.vehicleColorLabel ? ` (${leg.vehicleColorLabel})` : ''}`
+      : `${leg.operatorName} ${leg.corridorCode} · ${leg.corridorName}`;
 
     for (let i = 0; i < leg.stops.length - 1; i++) {
       const fromId = leg.stops[i];
@@ -59,7 +62,7 @@ export function buildSimulationSteps(
       const isTransferNext = isLastOfLeg && legIdx < route.legs.length - 1;
       const isFinalArrival = isLastOfLeg && legIdx === route.legs.length - 1;
 
-      let message = `Melaju bersama ${vehicleLabel} menuju ${toStop.name}`;
+      let message = `Melaju bersama ${shortVehicleLabel} menuju ${toStop.name}`;
       if (isFirstOfLeg && legIdx === 0) {
         const payText = isAngkot
           ? `siapkan tunai ~Rp${legFare.toLocaleString('id-ID')}`

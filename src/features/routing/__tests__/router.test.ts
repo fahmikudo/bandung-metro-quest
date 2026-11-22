@@ -165,13 +165,14 @@ describe('ManawiBandung Data & Routing Engine', () => {
     expect(mjtIntegrated?.totalFare).toBe(4900);
   });
 
-  it('membangun langkah simulasi & metafora hemat Bandung', () => {
-    const route = findRoutes('alun_alun', 'ciumbuleuit', {
+  it('membangun langkah simulasi dengan nama jurusan & metafora hemat Bandung', () => {
+    const route = findRoutes('ujungberung', 'dago_itb', {
       modeFilter: 'all',
       departureTime: '09:00',
     })[0];
     const steps = buildSimulationSteps(route, 'regular');
     expect(steps.length).toBeGreaterThanOrEqual(2);
+    expect(steps[0].message).toContain(route.legs[0].corridorName);
     expect(steps[steps.length - 1].isFinalArrival).toBe(true);
     expect(getBandungSavingsNote(20000)).toContain('es kopi susu');
   });
