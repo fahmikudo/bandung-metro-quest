@@ -69,6 +69,15 @@ const DATA_SOURCES: SourceEntry[] = [
     urlLabel: 'ourworldindata.org',
   },
   {
+    title: 'Rencana 18 Rute BRT & 29 Rute Feeder Cekungan Bandung',
+    badge: 'Rencana BRT',
+    badgeColor: 'primary',
+    organization: 'Kawal BRT — Forum Diskusi Transportasi Bandung (Transport for Bandung)',
+    note: 'Kompilasi 18 rute utama BRT dan 29 rute pengumpan (feeder) proyek MASTRAN Cekungan Bandung beserta status operasionalnya.',
+    url: 'https://kawalbrt.transportforbandung.org/#Rute',
+    urlLabel: 'kawalbrt.transportforbandung.org',
+  },
+  {
     title: 'Prakiraan Cuaca Bandung Raya',
     badge: 'Cuaca Resmi',
     badgeColor: 'primary',

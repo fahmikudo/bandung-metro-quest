@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { CORRIDORS, STOPS } from '@/shared/data/bandungTransit';
+import {
+  ALL_BRT_PLANNED_ROUTES,
+  BRT_FEEDER_ROUTES,
+  BRT_MAIN_ROUTES,
+} from '@/shared/data/brtBandungRaya';
 import { EMISSION_G_PER_PKM, estimateAngkotFare, findRoutes, getCorridorById } from '../router';
 import { buildSimulationSteps, getBandungSavingsNote } from '../simulator';
 import { ReportFormSchema, RouteSearchSchema } from '../schemas';
@@ -163,6 +168,18 @@ describe('ManawiBandung Data & Routing Engine', () => {
     expect(mjtIntegrated?.legs[1].fareRegular).toBe(0);
     // Total tetap Rp4.900 (bukan Rp9.800!) karena gratis integrasi MJT <=120 menit
     expect(mjtIntegrated?.totalFare).toBe(4900);
+  });
+
+  it('memuat lengkap 47 rute rencana Kawal BRT (18 BRT utama + 29 Feeder) & tautan koridor MJT aktif', () => {
+    expect(BRT_MAIN_ROUTES).toHaveLength(18);
+    expect(BRT_FEEDER_ROUTES).toHaveLength(29);
+    expect(ALL_BRT_PLANNED_ROUTES).toHaveLength(47);
+
+    for (const r of ALL_BRT_PLANNED_ROUTES) {
+      if (r.activeMjtCorridorId) {
+        expect(getCorridorById(r.activeMjtCorridorId), `Link MJT ${r.code}`).not.toBeNull();
+      }
+    }
   });
 
   it('membangun langkah simulasi dengan nama jurusan & metafora hemat Bandung', () => {
