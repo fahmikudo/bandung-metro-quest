@@ -1,0 +1,82 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  __resetAnalyticsForTest,
+  initAnalytics,
+  isValidGaMeasurementId,
+  trackEvent,
+} from '../analytics';
+
+describe('GA4 Analytics Wrapper', () => {
+  beforeEach(() => {
+    __resetAnalyticsForTest();
+  });
+
+  it('memvalidasi format GA4 Measurement ID (G-XXXXXXXXXX)', () => {
+    expect(isValidGaMeasurementId('G-1A2B3C4D5E')).toBe(true);
+    expect(isValidGaMeasurementId('g-abcdef1234')).toBe(true);
+    expect(isValidGaMeasurementId('')).toBe(false);
+    expect(isValidGaMeasurementId('UA-123456-1')).toBe(false);
+    expect(isValidGaMeasurementId('G-12')).toBe(false);
+  });
+
+  it('menjadi no-op aman saat Measurement ID kosong atau di mode dev tanpa debug', () => {
+    const initializedEmpty = initAnalytics({ measurementId: '', isDev: false });
+    expect(initializedEmpty).toBe(false);
+
+    const initializedDev = initAnalytics({
+      measurementId: 'G-1A2B3C4D5E',
+      isDev: true,
+      debug: false,
+    });
+    expect(initializedDev).toBe(false);
+  });
+
+  it('mengirim event GA4 melalui window.gtag saat diinisialisasi', () => {
+    const mockAppend = vi.fn();
+    const mockCreateElement = vi.fn(() => ({
+      id: '',
+      async: false,
+      src: '',
+    }));
+
+    const gtagSpy = vi.fn();
+    vi.stubGlobal('window', { dataLayer: [], gtag: gtagSpy });
+    vi.stubGlobal('document', {
+      getElementById: vi.fn(() => null),
+      createElement: mockCreateElement,
+      head: { appendChild: mockAppend },
+    });
+
+    const ok = initAnalytics({
+      measurementId: 'G-1A2B3C4D5E',
+      isDev: false,
+      debug: false,
+    });
+    expect(ok).toBe(true);
+    expect(mockAppend).toHaveBeenCalledTimes(1);
+
+    trackEvent('route_searched', {
+      from_id: 'alun_alun',
+      to_id: 'dago_itb',
+      route_pair: 'alun_alun__dago_itb',
+      mode_filter: 'all',
+      passenger_type: 'regular',
+      traffic_mode: 'normal',
+      results_count: 3,
+      trigger: 'to',
+    });
+
+    expect(gtagSpy).toHaveBeenCalledWith('event', 'route_searched', {
+      from_id: 'alun_alun',
+      to_id: 'dago_itb',
+      route_pair: 'alun_alun__dago_itb',
+      mode_filter: 'all',
+      passenger_type: 'regular',
+      traffic_mode: 'normal',
+      results_count: 3,
+      trigger: 'to',
+    });
+
+    vi.unstubAllGlobals();
+  });
+});

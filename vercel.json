@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/bmkg",
+      "destination": "https://api.bmkg.go.id/publik/prakiraan-cuaca"
+    }
+  ]
+}
