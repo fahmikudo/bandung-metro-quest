@@ -53,6 +53,10 @@ export interface AnalyticsEventMap {
   data_sources_opened: {
     source: 'footer';
   };
+  pwa_install_clicked: {
+    platform: 'android' | 'ios';
+    outcome: 'accepted' | 'dismissed' | 'guide_opened';
+  };
 }
 
 type GtagParamValue = string | number | boolean;

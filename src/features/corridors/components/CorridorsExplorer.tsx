@@ -94,7 +94,7 @@ export function CorridorsExplorer({ onSelectCorridorMobile }: CorridorsExplorerP
 
               const fareDesc =
                 op.pricingModel === 'distance'
-                  ? 'Tarif jarak Rp4.000–Rp10.000 · Tunai'
+                  ? 'Tarif jarak ~Rp3.000–Rp18.000 · Tunai'
                   : `Umum ${formatRupiah(op.fareRegular)} / Pelajar ${formatRupiah(op.fareDiscount)} · ${op.cashAccepted ? 'QRIS & Tunai' : 'QRIS/E-Money'}`;
 
               return (

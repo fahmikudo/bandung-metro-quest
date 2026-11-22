@@ -14,6 +14,7 @@ import type { ActiveTab } from '@/features/routing/schemas';
 import { buildWhatsAppSupportUrl } from '@/shared/lib/contact';
 import { trackEvent } from '@/shared/lib/analytics';
 import { BandungHeaderBackdrop, ManawiLogoMark } from '@/shared/components/BandungHeaderArt';
+import { InstallPwaButton } from '@/shared/components/InstallPwaButton';
 import { useBandungWeather } from '@/features/weather/useBandungWeather';
 import { WeatherAdvisoryBanner } from '@/features/weather/components/WeatherAdvisoryBanner';
 
@@ -195,6 +196,7 @@ export function App() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
+            <InstallPwaButton />
             <Button
               as="a"
               href={waSupportUrl}

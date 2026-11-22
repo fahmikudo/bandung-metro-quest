@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CORRIDORS, STOPS } from '@/shared/data/bandungTransit';
-import { EMISSION_G_PER_PKM, findRoutes, getCorridorById } from '../router';
+import { EMISSION_G_PER_PKM, estimateAngkotFare, findRoutes, getCorridorById } from '../router';
 import { buildSimulationSteps, getBandungSavingsNote } from '../simulator';
 import { ReportFormSchema, RouteSearchSchema } from '../schemas';
 
@@ -52,7 +52,7 @@ describe('ManawiBandung Data & Routing Engine', () => {
     expect(mjt?.requiresCashless).toBe(true);
   });
 
-  it('menghitung tarif pelajar MJT Rp2.000 & jarak Angkot Lembang', () => {
+  it('menghitung tarif pelajar MJT Rp2.000 & estimasi tarif Angkot sesuai acuan Transport for Bandung', () => {
     const mjtStudent = findRoutes('alun_alun', 'dipatiukur', {
       passengerType: 'discount',
       modeFilter: 'bus',
@@ -60,12 +60,19 @@ describe('ManawiBandung Data & Routing Engine', () => {
     })[0];
     expect(mjtStudent.totalFare).toBe(2000);
 
+    // Acuan transportforbandung.org/peta/angkot: 1–1,5 km Rp3rb | 1,5–5 km Rp5rb | 5–20 km Rp5–15rb | 20–25 km Rp15–18rb
+    expect(estimateAngkotFare(1.2).regular).toBe(3000);
+    expect(estimateAngkotFare(3.5).regular).toBe(5000);
+    expect(estimateAngkotFare(20).regular).toBe(15000);
+    expect(estimateAngkotFare(25).regular).toBe(18000);
+
+    // Stasiun Hall -> Lembang (16.3 km) jatuh di rentang 5–20 km (Rp13.000)
     const lembangReg = findRoutes('stasiun_hall', 'lembang', {
       passengerType: 'regular',
       modeFilter: 'angkot',
       departureTime: '09:00',
     })[0];
-    expect(lembangReg.totalFare).toBe(10000);
+    expect(lembangReg.totalFare).toBe(13000);
     expect(lembangReg.legs[0].vehicleColorLabel).toBe('Kuning – Putih (Lembang)');
   });
 

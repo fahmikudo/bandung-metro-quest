@@ -44,13 +44,13 @@ const DATA_SOURCES: SourceEntry[] = [
     urlLabel: 'mjt.trans.my.id',
   },
   {
-    title: '40 Jalur Angkot Kota Bandung',
-    badge: 'Peta Jaringan',
+    title: '40 Jalur & Perkiraan Tarif Angkot Bandung',
+    badge: 'Peta & Tarif',
     badgeColor: 'warning',
     organization: 'Forum Diskusi Transportasi Bandung (Transport for Bandung) & Dishub Kota Bandung',
-    note: 'Peta Angkutan Kota Bandung (Publikasi Juni 2023 · Lisensi CC BY-NC).',
-    url: 'https://linktr.ee/tfbandung',
-    urlLabel: 'linktr.ee/tfbandung',
+    note: 'Peta Angkutan Kota Bandung (Juni 2023 · Lisensi CC BY-NC) & panduan perkiraan tarif angkot berbasis jarak tempuh.',
+    url: 'https://transportforbandung.org/peta/angkot',
+    urlLabel: 'transportforbandung.org/peta/angkot',
   },
   {
     title: 'Acuan Estimasi Tarif Ojol Motor & Mobil',

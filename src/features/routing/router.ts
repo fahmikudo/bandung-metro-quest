@@ -145,11 +145,34 @@ export function getCorridorById(id: string): TransitCorridor | null {
   return corridorById[id] ?? null;
 }
 
-function estimateAngkotFare(distanceKm: number): { regular: number; discount: number } {
-  if (distanceKm <= 3.5) return { regular: 4000, discount: 3000 };
-  if (distanceKm <= 7.5) return { regular: 5000, discount: 4000 };
-  if (distanceKm <= 12.0) return { regular: 7000, discount: 5000 };
-  return { regular: 10000, discount: 8000 };
+/**
+ * Perkiraan tarif angkot Bandung Raya berdasarkan jarak tempuh.
+ * Sumber acuan: Panduan Angkot di Bandung Raya — Transport for Bandung
+ * (https://transportforbandung.org/peta/angkot):
+ * - 1–1,5 km: Rp3.000
+ * - 1,5–5 km: Rp5.000
+ * - 5–20 km: Rp5.000–Rp15.000
+ * - 20–25 km: Rp15.000–Rp18.000
+ */
+export function estimateAngkotFare(distanceKm: number): { regular: number; discount: number } {
+  let regular: number;
+
+  if (distanceKm <= 1.5) {
+    regular = 3000;
+  } else if (distanceKm <= 5.0) {
+    regular = 5000;
+  } else if (distanceKm <= 20.0) {
+    const raw = 5000 + ((distanceKm - 5.0) / 15.0) * 10000;
+    regular = Math.min(15000, Math.max(5000, Math.round(raw / 1000) * 1000));
+  } else {
+    const raw = 15000 + ((Math.min(distanceKm, 25.0) - 20.0) / 5.0) * 3000;
+    regular = Math.min(18000, Math.max(15000, Math.round(raw / 1000) * 1000));
+  }
+
+  const discount =
+    regular <= 3000 ? 3000 : Math.max(3000, Math.round((regular * 0.8) / 1000) * 1000);
+
+  return { regular, discount };
 }
 
 // Zona I Kemenhub Roda 2 (Bandung)
