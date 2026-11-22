@@ -10,7 +10,9 @@ dist-ssr/
 .env
 .env.local
 .env.*.local
+deploy/.env
 !.env.example
+!deploy/.env.example
 
 # Testing & coverage
 coverage/

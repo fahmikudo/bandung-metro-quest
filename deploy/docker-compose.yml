@@ -1,0 +1,24 @@
+services:
+  web:
+    # Di-pin oleh deploy.sh melalui MANAWI_WEB_IMAGE_TAG. Jangan pernah float ke latest:
+    # restart stack tidak boleh diam-diam mengambil build berbeda.
+    image: ghcr.io/fahmikudo/bandung-metro-quest:${MANAWI_WEB_IMAGE_TAG:?set MANAWI_WEB_IMAGE_TAG in .env}
+    container_name: manawi-bandung
+    restart: unless-stopped
+
+    # Loopback only. Host nginx adalah satu-satunya pintu masuk.
+    ports:
+      - "127.0.0.1:${APP_PORT:-8700}:80"
+
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

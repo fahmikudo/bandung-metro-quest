@@ -1,0 +1,15 @@
+# Hanya sertakan file yang dibutuhkan `npm run build`.
+.git
+.gitignore
+.github
+deploy
+node_modules
+dist
+coverage
+.env
+.env.*
+!.env.example
+.DS_Store
+*.tsbuildinfo
+vercel.json
+DEPLOYMENT.md

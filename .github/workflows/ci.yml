@@ -1,0 +1,194 @@
+# Test dan build SPA di GitHub Actions, push image ke GHCR, lalu server cukup
+# menarik image dan menjalankan `docker compose up -d`. Server tidak pernah
+# mengompilasi apa pun. Lihat DEPLOYMENT.md.
+#
+# Tag image (docker/metadata-action):
+#   sha-<short>   setiap push ke main dan setiap rilis — dipakai untuk rollback
+#   edge          ujung branch main
+#   X.Y.Z, X.Y    tag rilis vX.Y.Z
+#   latest        tag rilis v*
+#
+# Hanya tag rilis (v*) yang men-deploy ke server. Merge ke main hanya push image.
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  REGISTRY: ghcr.io
+  # Variabel build-time (Settings -> Variables). Kosong tidak memblokir build,
+  # GA4 akan aktif otomatis saat VITE_GA_MEASUREMENT_ID diisi.
+  VITE_GA_MEASUREMENT_ID: ${{ vars.VITE_GA_MEASUREMENT_ID }}
+  VITE_WHATSAPP_NUMBER: ${{ vars.VITE_WHATSAPP_NUMBER || '6285155377009' }}
+  VITE_BMKG_API_BASE: ${{ vars.VITE_BMKG_API_BASE || '/api/bmkg' }}
+
+jobs:
+  web:
+    name: Web (typecheck, test & build)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_GA_MEASUREMENT_ID: ${{ env.VITE_GA_MEASUREMENT_ID }}
+          VITE_WHATSAPP_NUMBER: ${{ env.VITE_WHATSAPP_NUMBER }}
+          VITE_BMKG_API_BASE: ${{ env.VITE_BMKG_API_BASE }}
+
+  deploy-files:
+    name: Deploy files
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Shellcheck deploy script
+        run: shellcheck -x --severity=warning deploy/deploy.sh
+
+      - name: Validate production compose
+        run: |
+          dir="$(mktemp -d)"
+          cp deploy/docker-compose.yml "$dir/docker-compose.yml"
+          cp deploy/.env.example "$dir/.env"
+          MANAWI_WEB_IMAGE_TAG=ci docker compose -f "$dir/docker-compose.yml" config --quiet
+
+  build-push:
+    name: Build and push image
+    needs: [web, deploy-files]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Derive image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}
+          tags: |
+            type=sha,format=short,prefix=sha-
+            type=edge,branch=main
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VITE_GA_MEASUREMENT_ID=${{ env.VITE_GA_MEASUREMENT_ID }}
+            VITE_WHATSAPP_NUMBER=${{ env.VITE_WHATSAPP_NUMBER }}
+            VITE_BMKG_API_BASE=${{ env.VITE_BMKG_API_BASE }}
+          cache-from: type=gha,scope=manawi-web
+          cache-to: type=gha,scope=manawi-web,mode=max
+
+  deploy:
+    name: Deploy to production
+    needs: build-push
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    # Menyimpan SSH secrets; bisa tambahkan Required reviewers untuk approval 1-klik.
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check deploy secrets
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          missing=""
+          for name in DEPLOY_HOST DEPLOY_PORT DEPLOY_USER DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS; do
+            if [ -z "${!name}" ]; then missing="${missing} ${name}"; fi
+          done
+          if [ -n "${missing}" ]; then
+            echo "::error::Missing secrets in the production environment:${missing}"
+            exit 1
+          fi
+
+      - name: Authorise SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keygen -y -f ~/.ssh/id_deploy > ~/.ssh/id_deploy.pub
+          ssh-keygen -lf ~/.ssh/id_deploy.pub
+          printf '%s\n' "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      - name: Test SSH access
+        run: |
+          ssh -i ~/.ssh/id_deploy -p "${{ secrets.DEPLOY_PORT }}" \
+            -o IdentitiesOnly=yes -o BatchMode=yes \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" true
+
+      - name: Ship compose file and deploy script
+        run: |
+          scp -i ~/.ssh/id_deploy -P "${{ secrets.DEPLOY_PORT }}" \
+            -o IdentitiesOnly=yes -o BatchMode=yes \
+            deploy/docker-compose.yml deploy/deploy.sh \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/manawi-bandung/"
+
+      - name: Pull and restart
+        env:
+          TAG: ${{ needs.build-push.outputs.version }}
+        run: |
+          ssh -i ~/.ssh/id_deploy -p "${{ secrets.DEPLOY_PORT }}" \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "chmod +x /opt/manawi-bandung/deploy.sh && /opt/manawi-bandung/deploy.sh MANAWI_WEB_IMAGE_TAG '${TAG}' web"
+
+      # Set repository variable WEB_URL (mis. https://manawi.web.id).
+      # Jika kosong, smoke test dilewati.
+      - name: Smoke test
+        if: vars.WEB_URL != ''
+        run: |
+          curl -fsS --max-time 10 -o /dev/null "${WEB_URL}/"
+          curl -fsS --max-time 10 -o /dev/null "${WEB_URL}/api/bmkg?adm4=32.73.19.1001"
+        env:
+          WEB_URL: ${{ vars.WEB_URL }}
