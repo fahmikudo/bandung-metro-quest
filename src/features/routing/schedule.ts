@@ -106,6 +106,8 @@ export const MJT_SCHEDULES: Record<string, MjtSchedule> = {
   'MJT-4': { first: '04:30', last: '20:30', headwayRange: '10–15 mnt' },
   'MJT-5': { first: '04:30', last: '19:30', headwayRange: '7–12 mnt' },
   'MJT-6': { first: '06:00', last: '14:00', headwayRange: '20–30 mnt' },
+  'MJT-FD1': { first: '05:00', last: '20:00', headwayRange: '10–15 mnt' },
+  'MJT-FD2': { first: '04:30', last: '20:00', headwayRange: '10–15 mnt' },
 };
 
 export function parseTimeToMinutes(hhmm: string): number | null {

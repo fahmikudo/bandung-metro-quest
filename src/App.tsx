@@ -114,7 +114,7 @@ export function App() {
                   title={
                     <span className="flex items-center gap-1.5">
                       <MapIcon className="h-3.5 w-3.5" />
-                      54 Jalur
+                      56 Jalur
                     </span>
                   }
                 />

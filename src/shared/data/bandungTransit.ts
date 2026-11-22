@@ -223,15 +223,39 @@ function buildAngkotCorridor(input: AngkotInput): TransitCorridor {
   };
 }
 
-// 54 JALUR BANDUNG RAYA: 6 MJT + 7 TMB (5 Koridor & 2 Feeder) + 40 Angkot Resmi Dishub/TfB + 1 Angkot Lembang
+// 56 JALUR BANDUNG RAYA: 8 MJT (6 Bus + 2 Angkot Feeder FD1 & FD2) + 7 TMB (5 Koridor & 2 Feeder) + 40 Angkot Resmi Dishub/TfB + 1 Angkot Lembang
 export const CORRIDORS: TransitCorridor[] = [
-  // === 6 MJT ===
+  // === 6 BUS MJT + 2 ANGKOT FEEDER MJT (FD1 & FD2) ===
   { id: 'MJT-1', code: 'K1', operator: 'MJT', name: 'Leuwipanjang – Soreang', shortDesc: 'Via Tol Soroja (Cepat)', color: '#0284c7', stops: ['leuwipanjang', 'kopo', 'soreang'], segmentMinutes: [14, 18], segmentKm: [5.2, 11.8] },
   { id: 'MJT-2', code: 'K2', operator: 'MJT', name: 'Alun-Alun – Kota Baru Parahyangan', shortDesc: 'Via Stasiun Bandung & Cimahi', color: '#d97706', stops: ['alun_alun', 'stasiun_hall', 'cimindi', 'cimahi', 'padalarang', 'kbp'], segmentMinutes: [10, 16, 12, 14, 10], segmentKm: [2.4, 5.8, 3.6, 5.5, 4.1] },
   { id: 'MJT-3', code: 'K3', operator: 'MJT', name: 'Baleendah – BEC Merdeka', shortDesc: 'Via Telkom Univ & Buah Batu', color: '#059669', stops: ['baleendah', 'bojongsoang', 'buah_batu', 'bkr_palasari', 'alun_alun', 'balai_kota', 'bip_bec'], segmentMinutes: [12, 13, 12, 10, 8, 7], segmentKm: [4.2, 4.8, 3.9, 2.8, 1.5, 1.4] },
   { id: 'MJT-4', code: 'K4', operator: 'MJT', name: 'Leuwipanjang – Unpad Dipatiukur', shortDesc: 'Via Alun-Alun, BIP & Dago ITB', color: '#e11d48', stops: ['leuwipanjang', 'tegallega', 'alun_alun', 'balai_kota', 'bip_bec', 'dago_itb', 'dipatiukur'], segmentMinutes: [9, 10, 8, 7, 11, 8], segmentKm: [2.5, 2.3, 1.5, 1.4, 3.1, 1.8] },
   { id: 'MJT-5', code: 'K5', operator: 'MJT', name: 'Dipatiukur – Jatinangor', shortDesc: 'Via Gasibu, Laswi & Tol Moh. Toha', color: '#9333ea', stops: ['dipatiukur', 'gasibu', 'laswi', 'moh_toha', 'jatinangor'], segmentMinutes: [9, 11, 13, 28], segmentKm: [2.4, 3.2, 4.1, 19.5] },
   { id: 'MJT-6', code: 'K6', operator: 'MJT', name: 'Leuwipanjang – Majalaya', shortDesc: 'Via Moh. Toha, Dayeuhkolot & Baleendah', color: '#db2777', stops: ['leuwipanjang', 'moh_toha', 'dayeuhkolot', 'baleendah', 'ciparay', 'majalaya'], segmentMinutes: [12, 14, 11, 18, 15], segmentKm: [4.0, 4.6, 3.5, 7.2, 6.4] },
+  {
+    id: 'MJT-FD1',
+    code: 'FD1',
+    operator: 'MJT',
+    name: 'Feeder 1: Simpang Soetta Kircon – Pasar Baru ABC',
+    shortDesc: 'Angkot Feeder MJT ber-AC (non-tunai, gratis integrasi MJT ≤120 mnt) via Buah Batu, Palasari, Kosambi, Cihapit, Gedung Sate & BIP',
+    vehicleColorLabel: 'Angkot Feeder MJT (Ber-AC · Non-Tunai)',
+    color: '#0369a1',
+    stops: ['kiaracondong', 'buah_batu', 'bkr_palasari', 'kosambi', 'riau_martadinata', 'gasibu', 'bip_bec', 'balai_kota', 'alun_alun'],
+    segmentMinutes: [10, 9, 8, 7, 7, 7, 6, 7],
+    segmentKm: [2.8, 2.5, 2.0, 1.8, 1.7, 1.6, 1.3, 1.5],
+  },
+  {
+    id: 'MJT-FD2',
+    code: 'FD2',
+    operator: 'MJT',
+    name: 'Feeder 2: Cicadas – Elang',
+    shortDesc: 'Angkot Feeder MJT ber-AC (non-tunai, gratis integrasi MJT ≤120 mnt) via Antapani, Kiara Artha, Laswi, TSM, Palasari, Alun-Alun & Stasiun Bandung',
+    vehicleColorLabel: 'Angkot Feeder MJT (Ber-AC · Non-Tunai)',
+    color: '#0891b2',
+    stops: ['cicadas', 'antapani', 'kiara_artha', 'laswi', 'binong', 'bkr_palasari', 'alun_alun', 'balai_kota', 'stasiun_hall', 'elang'],
+    segmentMinutes: [8, 7, 8, 7, 8, 9, 6, 6, 9],
+    segmentKm: [2.0, 1.8, 2.1, 1.6, 2.1, 2.2, 1.4, 1.4, 2.4],
+  },
 
   // === 7 TMB (5 KORIDOR + 2 FEEDER) ===
   { id: 'TMB-1', code: 'TMB 1', operator: 'TMB', name: 'Cibiru – Cibeureum', shortDesc: 'Jalur Soekarno-Hatta', color: '#16a34a', stops: ['cibiru', 'gedebage', 'buah_batu', 'moh_toha', 'leuwipanjang', 'sudirman', 'elang', 'cibeureum'], segmentMinutes: [13, 15, 12, 11, 10, 8, 8], segmentKm: [5.4, 6.2, 4.5, 4.0, 3.1, 2.0, 2.1] },

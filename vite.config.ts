@@ -25,7 +25,7 @@ export default defineConfig({
         name: 'ManawiBandung — Rute Bus & Angkot Bandung',
         short_name: 'ManawiBandung',
         description:
-          'Cek rute 54 jalur MJT, TMB, dan Angkot Bandung, jadwal keberangkatan, estimasi hemat vs ojol, cuaca BMKG, serta simulasi di peta — bade kamana manawi?',
+          'Cek rute 56 jalur MJT (termasuk Angkot Feeder FD1–FD2), TMB, dan Angkot Bandung, jadwal keberangkatan, estimasi hemat vs ojol, cuaca BMKG, serta simulasi di peta — bade kamana manawi?',
         lang: 'id',
         start_url: '/',
         scope: '/',

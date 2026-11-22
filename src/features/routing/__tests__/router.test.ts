@@ -16,8 +16,10 @@ const EXPECTED_40_DISHUB_ANGKOT = [
 ];
 
 describe('ManawiBandung Data & Routing Engine', () => {
-  it('memuat lengkap 54 jalur (6 MJT + 7 TMB termasuk Feeder 1 & 2 + 40 Angkot Dishub + 1 Lembang)', () => {
-    expect(CORRIDORS).toHaveLength(54);
+  it('memuat lengkap 56 jalur (6 Bus MJT + 2 Angkot Feeder MJT FD1/FD2 + 7 TMB termasuk Feeder 1 & 2 + 40 Angkot Dishub + 1 Lembang)', () => {
+    expect(CORRIDORS).toHaveLength(56);
+    expect(getCorridorById('MJT-FD1')).not.toBeNull();
+    expect(getCorridorById('MJT-FD2')).not.toBeNull();
     expect(getCorridorById('TMB-F1')).not.toBeNull();
     expect(getCorridorById('TMB-F2')).not.toBeNull();
     for (const id of EXPECTED_40_DISHUB_ANGKOT) {
@@ -138,6 +140,29 @@ describe('ManawiBandung Data & Routing Engine', () => {
       note: 'Halte Alun-Alun bergeser 20 meter ke depan pendopo.',
     });
     expect(validReport.success).toBe(true);
+  });
+
+  it('menerapkan tarif integrasi Rp0 (<=120 mnt) saat transit antara Angkot Feeder MJT (FD1/FD2) dan Bus MJT', () => {
+    // Cicadas -> Soreang (mode bus): naik FD2 ke Alun-Alun/Stasiun/Elang atau transfer MJT -> K1
+    // Contoh 1x transit MJT murni: Kosambi -> Cimahi (MJT-FD1 ke Alun-Alun/Stasiun -> MJT-2 ke Cimahi)
+    const routes = findRoutes('kosambi', 'cimahi', {
+      passengerType: 'regular',
+      modeFilter: 'bus',
+      departureTime: '09:00',
+    });
+    const mjtIntegrated = routes.find(
+      (r) =>
+        r.transfers === 1 &&
+        r.legs[0].operatorId === 'MJT' &&
+        r.legs[1].operatorId === 'MJT'
+    );
+    expect(mjtIntegrated).toBeDefined();
+    expect(mjtIntegrated?.legs[0].corridorId).toBe('MJT-FD1');
+    expect(mjtIntegrated?.legs[1].corridorId).toBe('MJT-2');
+    expect(mjtIntegrated?.legs[1].integratedFreeTransfer).toBe(true);
+    expect(mjtIntegrated?.legs[1].fareRegular).toBe(0);
+    // Total tetap Rp4.900 (bukan Rp9.800!) karena gratis integrasi MJT <=120 menit
+    expect(mjtIntegrated?.totalFare).toBe(4900);
   });
 
   it('membangun langkah simulasi & metafora hemat Bandung', () => {

@@ -32,6 +32,7 @@ export interface RouteLeg {
   distanceKm: number;
   fareRegular: number;
   fareDiscount: number;
+  integratedFreeTransfer?: boolean;
   cashAccepted: boolean;
   cashOnly: boolean;
   paymentMethods: string[];
@@ -290,13 +291,11 @@ function summarizeRoute(
   let totalWaitMin = 0;
   let totalDistanceKm = 0;
   let clockCursorMin = departureMinutesWib;
+  let mjtFirstTapMin: number | null = null;
 
   const enrichedLegs: RouteLeg[] = legs.map((leg, i) => {
     const corridor = corridorById[leg.corridorId];
     const schedule = evaluateLegSchedule(leg, corridor, clockCursorMin, trafficMode);
-
-    totalFare += isDiscount ? leg.fareDiscount : leg.fareRegular;
-    totalRideMin += leg.rideMinutes;
 
     const effectiveWait =
       schedule.hasExactTimetable && schedule.waitMinutes !== null && schedule.waitMinutes <= 90
@@ -305,11 +304,37 @@ function summarizeRoute(
           ? leg.waitMinutes
           : Math.max(leg.waitMinutes, transferPenalty);
 
+    const boardingMin = clockCursorMin + effectiveWait;
+
+    // Skema resmi tarif integrasi Metro Jabar Trans (Bus K1–K6 <-> Angkot Feeder FD1/FD2):
+    // Gratis (Rp0) untuk sambungan antar layanan MJT dalam 120 menit sejak tap pertama.
+    let integratedFreeTransfer = false;
+    let effectiveRegularFare = leg.fareRegular;
+    let effectiveDiscountFare = leg.fareDiscount;
+
+    if (leg.operatorId === 'MJT') {
+      if (mjtFirstTapMin === null) {
+        mjtFirstTapMin = boardingMin;
+      } else if (boardingMin - mjtFirstTapMin <= 120) {
+        integratedFreeTransfer = true;
+        effectiveRegularFare = 0;
+        effectiveDiscountFare = 0;
+      }
+    }
+
+    totalFare += isDiscount ? effectiveDiscountFare : effectiveRegularFare;
+    totalRideMin += leg.rideMinutes;
     totalWaitMin += effectiveWait;
     totalDistanceKm += leg.distanceKm;
-    clockCursorMin += effectiveWait + leg.rideMinutes;
+    clockCursorMin = boardingMin + leg.rideMinutes;
 
-    return { ...leg, schedule };
+    return {
+      ...leg,
+      fareRegular: effectiveRegularFare,
+      fareDiscount: effectiveDiscountFare,
+      integratedFreeTransfer,
+      schedule,
+    };
   });
 
   const totalMinutes = totalRideMin + totalWaitMin;

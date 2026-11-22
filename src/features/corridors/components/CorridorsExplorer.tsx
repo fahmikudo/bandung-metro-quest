@@ -39,9 +39,9 @@ export function CorridorsExplorer({ onSelectCorridorMobile }: CorridorsExplorerP
     >
       <CardBody className="gap-3.5 p-4">
         <div>
-          <h2 className="text-base font-extrabold text-slate-900">54 Jalur Bandung Raya</h2>
+          <h2 className="text-base font-extrabold text-slate-900">56 Jalur Bandung Raya</h2>
           <p className="text-xs font-medium text-slate-500">
-            6 MJT + 7 TMB (5 Koridor &amp; 2 Feeder) + 40 Angkot Dishub/TfB &amp; Lembang.
+            8 MJT (6 Bus &amp; 2 Angkot Feeder FD1–FD2) + 7 TMB (5 Koridor &amp; 2 Feeder) + 40 Angkot Dishub/TfB &amp; Lembang.
           </p>
         </div>
 
@@ -75,7 +75,7 @@ export function CorridorsExplorer({ onSelectCorridorMobile }: CorridorsExplorerP
           }}
         >
           <Tab key="ALL" title="Semua" />
-          <Tab key="MJT" title="MJT (6)" />
+          <Tab key="MJT" title="MJT (8)" />
           <Tab key="TMB" title="TMB (7)" />
           <Tab key="ANGKOT" title="Angkot (41)" />
         </Tabs>

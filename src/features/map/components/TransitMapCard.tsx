@@ -448,7 +448,7 @@ export function TransitMapCard() {
             viewBox={viewBox}
             className={`block h-auto w-full select-none ${isWideCanvas ? 'min-w-[620px] lg:min-w-0' : ''}`}
             role="img"
-            aria-label="Peta interaktif 54 jalur Bus dan Angkot Bandung Raya"
+            aria-label="Peta interaktif 56 jalur Bus dan Angkot Bandung Raya"
           >
             <defs>
               <pattern id="metroDotsSky" width="28" height="28" patternUnits="userSpaceOnUse">

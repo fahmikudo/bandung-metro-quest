@@ -35,11 +35,11 @@ const DATA_SOURCES: SourceEntry[] = [
     urlLabel: 'uptangkutan-bandung.id',
   },
   {
-    title: 'Metro Jabar Trans (MJT Koridor 1–6)',
+    title: 'Metro Jabar Trans (MJT Koridor 1–6 & Angkot Feeder FD1–FD2)',
     badge: 'Rute, Tarif & Jam Operasional',
     badgeColor: 'primary',
     organization: 'Dinas Perhubungan Provinsi Jawa Barat',
-    note: 'Informasi koridor, tarif resmi, dan pemantauan armada MJT.',
+    note: 'Informasi koridor bus & angkot feeder (FD1–FD2), tarif resmi, integrasi gratis ≤120 menit, dan pemantauan armada MJT.',
     url: 'https://mjt.trans.my.id',
     urlLabel: 'mjt.trans.my.id',
   },

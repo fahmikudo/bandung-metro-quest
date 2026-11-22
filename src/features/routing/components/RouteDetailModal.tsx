@@ -276,7 +276,15 @@ export function RouteDetailModal({
                         → Turun di{' '}
                         <strong className="text-slate-900">{STOPS[leg.toId]?.name}</strong>{' '}
                         <span className="text-slate-500">
-                          ({leg.stopCount} titik · ~{leg.rideMinutes} mnt · {formatRupiah(fare)})
+                          ({leg.stopCount} titik · ~{leg.rideMinutes} mnt ·{' '}
+                          {leg.integratedFreeTransfer ? (
+                            <strong className="font-bold text-emerald-700">
+                              Rp0 — Gratis Integrasi MJT ≤120 mnt
+                            </strong>
+                          ) : (
+                            formatRupiah(fare)
+                          )}
+                          )
                         </span>
                       </p>
 
