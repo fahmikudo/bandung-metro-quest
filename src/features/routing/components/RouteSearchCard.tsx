@@ -14,22 +14,24 @@ import { POPULAR_TRIPS, SORTED_STOPS, STOPS } from '@/shared/data/bandungTransit
 import { useTransitStore } from '../store';
 import type { ModeFilter, PassengerType, TrafficMode } from '../schemas';
 
-interface StopAutocompleteProps {
+export interface StopAutocompleteProps {
   label: string;
   placeholder: string;
   pinLabel: 'A' | 'B';
   pinColorClass: string;
   selectedId: string;
   onSelect: (stopId: string) => void;
+  compact?: boolean;
 }
 
-function StopAutocomplete({
+export function StopAutocomplete({
   label,
   placeholder,
   pinLabel,
   pinColorClass,
   selectedId,
   onSelect,
+  compact = false,
 }: StopAutocompleteProps) {
   const selectedName = STOPS[selectedId]?.name ?? '';
   const [inputValue, setInputValue] = useState(selectedName);
@@ -53,7 +55,7 @@ function StopAutocomplete({
   return (
     <Autocomplete
       aria-label={label}
-      label={label}
+      label={compact ? undefined : label}
       labelPlacement="outside"
       placeholder={placeholder}
       size="md"
@@ -84,14 +86,16 @@ function StopAutocomplete({
       }
       classNames={{
         base: 'w-full',
-        listboxWrapper: 'max-h-80',
+        listboxWrapper: 'max-h-72 sm:max-h-80',
       }}
       inputProps={{
         classNames: {
           label: 'text-sm font-bold text-slate-700 pb-1.5',
-          inputWrapper:
-            'h-12 bg-[#F4F8FF] border-sky-200 hover:border-[#004AAD]/50 group-data-[focus=true]:border-[#004AAD] group-data-[focus=true]:bg-white shadow-none',
-          input: 'text-[15px] font-semibold text-slate-900 placeholder:font-normal placeholder:text-slate-400',
+          inputWrapper: `${
+            compact ? 'h-11' : 'h-12'
+          } bg-[#F4F8FF] border-sky-200 hover:border-[#004AAD]/50 group-data-[focus=true]:border-[#004AAD] group-data-[focus=true]:bg-white shadow-none`,
+          input:
+            'text-[15px] font-semibold text-slate-900 placeholder:font-normal placeholder:text-slate-400',
         },
       }}
       popoverProps={{
