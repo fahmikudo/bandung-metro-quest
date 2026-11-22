@@ -69,63 +69,77 @@ declare global {
 }
 
 const GA4_ID_PATTERN = /^G-[A-Z0-9]{6,}$/i;
+const DEFAULT_HTML_GA4_ID = 'G-ZPPJSXF8RB';
 const SCRIPT_ELEMENT_ID = 'manawibandung-ga4-script';
 
-let directGaEnabled = false;
-let gtmEnabled = false;
+let gaEnabled = false;
 
 export function isValidGaMeasurementId(id?: string | null): id is string {
   if (!id) return false;
   return GA4_ID_PATTERN.test(id.trim());
 }
 
-function detectGtmInstalled(): boolean {
-  if (typeof document === 'undefined' || typeof window === 'undefined') return false;
+function detectStaticGtag(): boolean {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return false;
+  if (typeof window.gtag === 'function') return true;
   if (typeof document.querySelector === 'function') {
-    if (document.querySelector('script[src*="googletagmanager.com/gtm.js"]')) {
-      return true;
-    }
+    return Boolean(document.querySelector('script[src*="googletagmanager.com/gtag/js"]'));
   }
-  return Array.isArray(window.dataLayer) && window.dataLayer.some(
-    (item) => typeof item === 'object' && item !== null && 'gtm.start' in item
-  );
+  return false;
 }
 
 /**
- * Menginisialisasi analytics:
- * 1. Mendeteksi Google Tag Manager (GTM) yang terpasang di index.html agar seluruh
- *    product event otomatis dikirim ke `window.dataLayer` (siap ditangkap trigger GTM).
- * 2. Opsional: jika VITE_GA_MEASUREMENT_ID (G-...) juga diisi, memuat gtag.js langsung.
+ * Menginisialisasi Google Analytics 4 (gtag.js).
+ * Jika snippet gtag.js sudah terpasang statis di index.html, langsung aktifkan
+ * pengiriman custom event tanpa menduplikasi `gtag('config', ...)` untuk ID yang sama.
  */
 export function initAnalytics(options?: {
   measurementId?: string;
   isDev?: boolean;
   debug?: boolean;
-  gtmPresent?: boolean;
+  staticGtagPresent?: boolean;
 }): boolean {
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return false;
   }
 
-  gtmEnabled = options?.gtmPresent ?? detectGtmInstalled();
-
+  const hasStaticGtag = options?.staticGtagPresent ?? detectStaticGtag();
   const rawId = options?.measurementId ?? import.meta.env.VITE_GA_MEASUREMENT_ID;
   const isDev = options?.isDev ?? import.meta.env.DEV;
   const debugMode = options?.debug ?? import.meta.env.VITE_GA_DEBUG === 'true';
 
+  if (hasStaticGtag) {
+    gaEnabled = true;
+    // Jika ada Measurement ID tambahan berbeda via env (bukan default index.html), konfigurasikan juga.
+    if (
+      isValidGaMeasurementId(rawId) &&
+      rawId.trim().toUpperCase() !== DEFAULT_HTML_GA4_ID &&
+      (!isDev || debugMode) &&
+      typeof window.gtag === 'function'
+    ) {
+      window.gtag('config', rawId.trim().toUpperCase(), {
+        send_page_view: true,
+        ...(debugMode ? { debug_mode: true } : {}),
+      });
+    }
+    return true;
+  }
+
   if (!isValidGaMeasurementId(rawId) || (isDev && !debugMode)) {
-    directGaEnabled = false;
-    return gtmEnabled;
+    gaEnabled = false;
+    return false;
   }
 
   const measurementId = rawId.trim().toUpperCase();
 
   window.dataLayer = window.dataLayer ?? [];
-  window.gtag =
-    window.gtag ??
-    function gtag(...args: GtagCommand) {
-      window.dataLayer?.push(args);
+  if (typeof window.gtag !== 'function') {
+    // PENTING: gtag.js mewajibkan `arguments` object, bukan Array rest (...args).
+    window.gtag = function gtag() {
+      // eslint-disable-next-line prefer-rest-params
+      window.dataLayer?.push(arguments);
     };
+  }
 
   if (!document.getElementById(SCRIPT_ELEMENT_ID)) {
     const script = document.createElement('script');
@@ -141,18 +155,20 @@ export function initAnalytics(options?: {
     ...(debugMode ? { debug_mode: true } : {}),
   });
 
-  directGaEnabled = true;
+  gaEnabled = true;
   return true;
 }
 
 /**
- * Mengirim custom product event ke GTM dataLayer dan/atau GA4 gtag.
+ * Mengirim custom product event langsung ke Google Analytics 4 via gtag().
  */
 export function trackEvent<K extends keyof AnalyticsEventMap>(
   eventName: K,
   params: AnalyticsEventMap[K]
 ): void {
-  if (typeof window === 'undefined') return;
+  if (!gaEnabled || typeof window === 'undefined' || typeof window.gtag !== 'function') {
+    return;
+  }
 
   const cleanParams: Record<string, GtagParamValue> = {};
   for (const [key, value] of Object.entries(params)) {
@@ -161,23 +177,10 @@ export function trackEvent<K extends keyof AnalyticsEventMap>(
     }
   }
 
-  // Format standar Google Tag Manager (object push dengan key `event`)
-  if (gtmEnabled) {
-    window.dataLayer = window.dataLayer ?? [];
-    window.dataLayer.push({
-      event: eventName,
-      ...cleanParams,
-    });
-  }
-
-  // Format langsung GA4 (aktif jika VITE_GA_MEASUREMENT_ID diisi)
-  if (directGaEnabled && typeof window.gtag === 'function') {
-    window.gtag('event', eventName, cleanParams);
-  }
+  window.gtag('event', eventName, cleanParams);
 }
 
 /** Helper internal untuk pengujian unit */
 export function __resetAnalyticsForTest(): void {
-  directGaEnabled = false;
-  gtmEnabled = false;
+  gaEnabled = false;
 }

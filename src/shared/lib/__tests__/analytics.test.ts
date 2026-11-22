@@ -6,24 +6,24 @@ import {
   trackEvent,
 } from '../analytics';
 
-describe('GA4 & GTM Analytics Wrapper', () => {
+describe('GA4 Analytics Wrapper', () => {
   beforeEach(() => {
     __resetAnalyticsForTest();
   });
 
   it('memvalidasi format GA4 Measurement ID (G-XXXXXXXXXX)', () => {
-    expect(isValidGaMeasurementId('G-1A2B3C4D5E')).toBe(true);
+    expect(isValidGaMeasurementId('G-ZPPJSXF8RB')).toBe(true);
     expect(isValidGaMeasurementId('g-abcdef1234')).toBe(true);
     expect(isValidGaMeasurementId('')).toBe(false);
     expect(isValidGaMeasurementId('UA-123456-1')).toBe(false);
     expect(isValidGaMeasurementId('G-12')).toBe(false);
   });
 
-  it('menjadi no-op aman saat GTM & Measurement ID tidak aktif', () => {
+  it('menjadi no-op aman saat gtag statis dan Measurement ID tidak ada', () => {
     const initializedEmpty = initAnalytics({
       measurementId: '',
       isDev: false,
-      gtmPresent: false,
+      staticGtagPresent: false,
     });
     expect(initializedEmpty).toBe(false);
 
@@ -31,14 +31,14 @@ describe('GA4 & GTM Analytics Wrapper', () => {
       measurementId: 'G-1A2B3C4D5E',
       isDev: true,
       debug: false,
-      gtmPresent: false,
+      staticGtagPresent: false,
     });
     expect(initializedDev).toBe(false);
   });
 
-  it('mendorong object event ke window.dataLayer saat Google Tag Manager (GTM) aktif', () => {
-    const dataLayer: unknown[] = [{ 'gtm.start': Date.now(), event: 'gtm.js' }];
-    vi.stubGlobal('window', { dataLayer });
+  it('mengaktifkan trackEvent otomatis ketika gtag.js sudah terpasang statis di index.html', () => {
+    const gtagSpy = vi.fn();
+    vi.stubGlobal('window', { dataLayer: [], gtag: gtagSpy });
     vi.stubGlobal('document', {
       querySelector: vi.fn(() => null),
       getElementById: vi.fn(() => null),
@@ -46,6 +46,8 @@ describe('GA4 & GTM Analytics Wrapper', () => {
 
     const ok = initAnalytics({ measurementId: '', isDev: false });
     expect(ok).toBe(true);
+    // Tidak memanggil config ulang untuk ID default yang sudah dikonfigurasi di index.html
+    expect(gtagSpy).not.toHaveBeenCalled();
 
     trackEvent('route_searched', {
       from_id: 'alun_alun',
@@ -58,8 +60,7 @@ describe('GA4 & GTM Analytics Wrapper', () => {
       trigger: 'to',
     });
 
-    expect(dataLayer).toContainEqual({
-      event: 'route_searched',
+    expect(gtagSpy).toHaveBeenCalledWith('event', 'route_searched', {
       from_id: 'alun_alun',
       to_id: 'dago_itb',
       route_pair: 'alun_alun__dago_itb',
@@ -73,7 +74,7 @@ describe('GA4 & GTM Analytics Wrapper', () => {
     vi.unstubAllGlobals();
   });
 
-  it('mengirim event GA4 melalui window.gtag saat Measurement ID diisi langsung', () => {
+  it('memuat gtag.js dinamis jika belum terpasang statis dan Measurement ID diisi', () => {
     const mockAppend = vi.fn();
     const mockCreateElement = vi.fn(() => ({
       id: '',
@@ -81,8 +82,8 @@ describe('GA4 & GTM Analytics Wrapper', () => {
       src: '',
     }));
 
-    const gtagSpy = vi.fn();
-    vi.stubGlobal('window', { dataLayer: [], gtag: gtagSpy });
+    const dataLayer: unknown[] = [];
+    vi.stubGlobal('window', { dataLayer });
     vi.stubGlobal('document', {
       querySelector: vi.fn(() => null),
       getElementById: vi.fn(() => null),
@@ -94,7 +95,7 @@ describe('GA4 & GTM Analytics Wrapper', () => {
       measurementId: 'G-1A2B3C4D5E',
       isDev: false,
       debug: false,
-      gtmPresent: false,
+      staticGtagPresent: false,
     });
     expect(ok).toBe(true);
     expect(mockAppend).toHaveBeenCalledTimes(1);
@@ -104,10 +105,9 @@ describe('GA4 & GTM Analytics Wrapper', () => {
       corridor_code: 'TMB 2',
     });
 
-    expect(gtagSpy).toHaveBeenCalledWith('event', 'live_tracker_clicked', {
-      provider: 'BEMO',
-      corridor_code: 'TMB 2',
-    });
+    // Pastikan item terakhir adalah Arguments object (bukan Array biasa) agar diterima gtag.js
+    const lastEntry = dataLayer[dataLayer.length - 1];
+    expect(Object.prototype.toString.call(lastEntry)).toBe('[object Arguments]');
 
     vi.unstubAllGlobals();
   });
