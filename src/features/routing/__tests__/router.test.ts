@@ -44,19 +44,30 @@ describe('ManawiBandung Data & Routing Engine', () => {
     expect(getCorridorById('ANGKOT-16')?.name).toBe('Dago – Riung Bandung');
   });
 
-  it('menemukan opsi langsung Bus MJT K4 & Angkot 02 dari Alun-Alun ke Dipatiukur', () => {
-    const routes = findRoutes('alun_alun', 'dipatiukur', {
+  it('menemukan Bus MJT K4 langsung dari Stasiun Bandung ke Dipatiukur & Angkot 02 langsung dari Alun-Alun', () => {
+    // 1. Stasiun Bandung -> Dipatiukur: dilayani langsung oleh Bus MJT K4 (Leuwipanjang - Dipatiukur via Stasiun Hall)
+    const stasiunRoutes = findRoutes('stasiun_hall', 'dipatiukur', {
       passengerType: 'regular',
       trafficMode: 'normal',
       modeFilter: 'all',
       departureTime: '09:00',
     });
-    const mjt = routes.find((r) => r.transfers === 0 && r.legs[0].corridorId === 'MJT-4');
-    const angkot = routes.find((r) => r.transfers === 0 && r.legs[0].corridorId === 'ANGKOT-02');
+    const mjt = stasiunRoutes.find((r) => r.transfers === 0 && r.legs[0].corridorId === 'MJT-4');
     expect(mjt).toBeDefined();
-    expect(angkot).toBeDefined();
     expect(mjt?.totalFare).toBe(4900);
     expect(mjt?.requiresCashless).toBe(true);
+
+    // 2. Alun-Alun -> Dipatiukur: dilayani langsung oleh Angkot 02 (Kalapa - Dago), sedangkan MJT K4 tidak lewat halte Alun-Alun
+    const alunAlunRoutes = findRoutes('alun_alun', 'dipatiukur', {
+      passengerType: 'regular',
+      trafficMode: 'normal',
+      modeFilter: 'all',
+      departureTime: '09:00',
+    });
+    const angkot02 = alunAlunRoutes.find((r) => r.transfers === 0 && r.legs[0].corridorId === 'ANGKOT-02');
+    const directMjtAtAlunAlun = alunAlunRoutes.find((r) => r.transfers === 0 && r.legs[0].corridorId === 'MJT-4');
+    expect(angkot02).toBeDefined();
+    expect(directMjtAtAlunAlun).toBeUndefined();
   });
 
   it('menghitung tarif pelajar MJT Rp2.000 & estimasi tarif Angkot sesuai acuan Transport for Bandung', () => {
